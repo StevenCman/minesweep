@@ -11,15 +11,15 @@ def settings():
 	try:
 		root.destroy()
 	except:
-		print("didnt close start window")
+		print()
 	try:
 		lostGame.destroy()
 	except:
-		print ("didnt close lost window")
+		print()
 	try:
 		gameWindow.destroy()	
 	except:
-		print ("didnt close game window")
+		print()
 
 	global settingsWindow
 	settingsWindow = tkinter.Tk()
@@ -45,20 +45,31 @@ def settings():
 	for item in ["Almost none", "Some", "Too many"]:
 		mines.insert(END, item)
 
-	continueButton = Button(settingsWindow, text= "Continue", command= lambda: gameplay(size.get(ACTIVE), mines.get(ACTIVE)))
+	continueButton = Button(settingsWindow, text= "Continue", command= lambda: gameplay(size.get(ACTIVE), mines.get(ACTIVE), 0))
 	continueButton.place(relx=0.5, rely=0.9, anchor=CENTER)
 
-def gameplay(size, mines):
+def gameplay(size, mines, arr):
 	global gameWindow
 	global mineArray
 	global btnArray
-	settingsWindow.destroy()
+	try:
+		settingsWindow.destroy()
+	except:
+		print()
+
+	try:
+		campaignWindow.destroy()
+	except:
+		print()
+
 	gameWindow = tkinter.Tk()
-	gameWindow.title("Shitty Minesweeper")
+	if (level != 0):
+		gameWindow.title("Shitty Minesweep Level " + str(level))
+	else:	
+		gameWindow.title("Shitty Minesweeper")
 	x = 1
 	y = 1
 	num = 0
-	print(size)
 	if (size=="Small" and mines == "Almost none"):
 		x = 5
 		y = 5
@@ -91,21 +102,38 @@ def gameplay(size, mines):
 		x = 30
 		y = 30
 		num = 400	
-	else:
+	elif(size=="Large" and mines=="Too many"):
 		x = 30
 		y = 30
 		num = 500
-	print(num)
+	else:
+		x = size
+		y = size
+		num = mines
+
 	mineArray = [[0 for p in range(y)] for q in range(x)]
 	btnArray = [[0 for x in range(y)] for x in range(x)]
-	mineMaker(num, x, y, mineArray)
-	updater(x,y,mineArray)
 
+	if(arr==0):
+		mineMaker(num, x, y, mineArray)
+		updater(x,y,mineArray)
+	else:
+		mineArray = arr
+	if(level == 1):
+		tutorial = Label(gameWindow, text="The mine is in the middle square, just click around it")
+		tutorial.pack(side=TOP)
+	elif(level == 2):
+		tutorial = label(gameWindow, text="The mines for this one are in a diagonal line (bottom left to top right)\n If you click the other 2 corners it will reveal the board")
+		tutorial.pack(side=TOP)
+	if(level == 0):
+		restartBtn = Button(gameWindow, text= "Restart", command=settings)
+		restartBtn.pack(side=TOP)
 
 	quitBtn = Button(gameWindow, text= "Quit", command=quit)
-	restartBtn = Button(gameWindow, text= "Restart", command=settings)
 	quitBtn.pack(side=TOP)
-	restartBtn.pack(side=TOP)
+
+	hintBtn = Button(gameWindow, text= "Hint", command=lambda x1 = x, y1 = y, number = num: hint(x1, y1, number))
+	hintBtn.pack(side = RIGHT)
 
 	for t in range(x):
 		frame = tkinter.Frame(gameWindow)
@@ -158,64 +186,44 @@ def updater(x, y, mineArray):
 	for r in range(0,x):
 		for c in range(0,y):
 			if mineArray[r][c] == "*":
-				#print("updating value of " + str(r) + ", " + str(c))
 				updateValue(r, c, mineArray)
 
 def updateValue(rn, c, mineArray):
 
 	if rn-1 > -1:
 		if(mineArray[rn-1][c-1] != "*" and c-1 > -1):
-			#print("bottom left")
 			mineArray[rn-1][c-1] += 1
+
 		if(mineArray[rn-1][c] != "*"):
-			#print("bottom")
 			mineArray[rn-1][c] += 1
+
 		if(c+1 < len(mineArray[0]) and mineArray[rn-1][c+1] != "*"):
-			#print("bottom right")
 			mineArray[rn-1][c+1] += 1
 
 	if(c-1 > -1 and mineArray[rn][c-1] != "*"):
-		#print("left")
 		mineArray[rn][c-1] += 1
+
 	if(c+1 < len(mineArray[0]) and mineArray[rn][c+1] != "*"):
-		#print("right")
 		mineArray[rn][c+1] += 1
 
 	if rn+1 < len(mineArray[0]):
 		if mineArray[rn+1][c-1] != "*" and c-1 > -1:
-			#print("top left")
 			mineArray[rn+1][c-1] += 1
 
 		if mineArray[rn+1][c] != "*":
-			#print("top")
 			mineArray[rn+1][c] += 1
 
 		if  (c+1 < len(mineArray[0]) and mineArray[rn+1][c+1] != "*" ):
-			#print("top right")
 			mineArray[rn+1][c+1] += 1
 
-def lost():
-	gameWindow.destroy()
-	global lostGame
-	lostGame = tkinter.Tk()
-	lostGame.title("Game Over")
-	lostGame.geometry("300x200")
-
-	defeat = Image.open("C:/Python Crap/loss.jpg")
-	defeat = defeat.resize((100,100))
-	defeat = ImageTk.PhotoImage(defeat)
-
-	over = Label(lostGame, text="You hit a mine and have lost the game")
-	over.pack(side=TOP)
-	restartBtn = Button(lostGame, text= "Restart", command= settings)
-	restartBtn.pack(side=TOP)
-
-	defLbl = Label(lostGame, image = defeat)
-	defLbl.image = defeat
-	defLbl.pack(side = TOP)
-
-	quitBtn = Button(lostGame, text= "Quit", command=quit)
-	quitBtn.pack(side=BOTTOM)
+def hint(x1,y1,num):
+	x = random.randint(0, x1-1)
+	y = random.randint(0, y1-1)
+	if(str(btnArray[x][y]['state']) == "normal" and mineArray[x][y] != "*"):
+		btnArray[x][y].config(text=mineArray[x][y], state=DISABLED)
+		winCheck(x1, y1, num)
+	else:
+		hint(x1,y1,num)
 
 def left(event,t,u, num):
 	btnArray[t][u].unbind('<Button-1>')
@@ -265,8 +273,12 @@ def winCheck(x, y, num):
 			if (str(btnArray[t][u]['state']) == "normal"):
 				counter += 1
 	print("Counter: " + str(counter))			
-	if (counter == num):
+	if (counter == num and level == 0):
+		time.sleep(3)
 		won()
+	elif(counter == num and level > 0):
+		time.sleep(3)
+		campaign()
 
 def won():
 	gameWindow.destroy()
@@ -274,7 +286,7 @@ def won():
 
 	wonGame = tkinter.Tk()
 	wonGame.title("CONGRATULATIONS!!")
-	wonGame.geometry("300x200")
+	wonGame.geometry("400x200")
 
 	victory = Image.open("C:/Python Crap/victory.jpg")
 	victory = victory.resize((100,100))
@@ -291,7 +303,73 @@ def won():
 	quitBtn = Button(wonGame, text= "Quit", command=quit)
 	quitBtn.pack(side=BOTTOM)
 
+def lost():
+	gameWindow.destroy()
+	global lostGame
+	lostGame = tkinter.Tk()
+	lostGame.title("Game Over")
+	lostGame.geometry("300x200")
+
+	defeat = Image.open("C:/Python Crap/loss.jpg")
+	defeat = defeat.resize((100,100))
+	defeat = ImageTk.PhotoImage(defeat)
+
+	over = Label(lostGame, text="You hit a mine and have lost the game")
+	over.pack(side=TOP)
+	restartBtn = Button(lostGame, text= "Restart", command= settings)
+	restartBtn.pack(side=TOP)
+
+	defLbl = Label(lostGame, image = defeat)
+	defLbl.image = defeat
+	defLbl.pack(side = TOP)
+
+	quitBtn = Button(lostGame, text= "Quit", command=quit)
+	quitBtn.pack(side=BOTTOM)
+
+def campaign():
+	try:
+		root.destroy()
+	except:
+		print()
+	try:
+		gameWindow.destroy()
+	except:
+		print()			
+	global level
+	global campaignWindow
+	campaignWindow = tkinter.Tk()
+	campaignWindow.title("Minesweep Level " + str(level))
+	campaignWindow.geometry("400x200")
+	x1 = 0
+	miner = 0
+	lives = 3
+	mineArr = 0
+	if (level == 0):
+		Intro = Label(campaignWindow, text="Welcome to your Minesweep adventure!\n Hit continue below to get to your first minefield and start clearing land\n You can hit three mines before you are fired from your job")
+		Intro.pack(side=TOP)
+		mineArr = [[1,1,1], [1,"*",1], [1,1,1]]
+		x1=3
+		miner=1
+		level += 1
+		print (level)
+	elif(level == 1):
+		print("Here")
+		Intro = Label(campaignWindow, text="Congratulations on clearing your first minefield!\n Its only going to get harder from here.")
+		Intro.pack(side = TOP)
+		mineArr = [["*",2,1,0,0],[2,"*",2,1,0],[1,2,"*",2,1],[0,1,2,"*",2],[0,0,1,2,"*"]]
+		x1=5
+		miner=5
+		level += 1
+	liveLbl = Label(campaignWindow, text="You have " + str(lives) +" lives left")
+	liveLbl.place(relx=0.5, rely=0.4, anchor=CENTER)
+	cont = Button(campaignWindow, text="Continue", command=lambda x=x1, mine=miner: gameplay(x,mine, mineArr))
+	cont.place(relx=0.5, rely=0.5, anchor=CENTER)
+
 global flag
+global lives
+global level
+level = 0
+lives = 0
 root = tkinter.Tk()
 root.geometry("300x400")
 root.title('Shitty Minesweeper')
@@ -307,11 +385,14 @@ label = Label(image=flag)
 label.image = flag
 label.pack(side = TOP)
 
-startBtn = Button(root, text="Start", command=settings)
-startBtn.place(relx=0.5, rely=0.3, anchor=CENTER)
+campBtn = Button(root, text="Campaign", command=campaign)
+campBtn.place(relx=0.5, rely=0.3, anchor=CENTER)
+
+startBtn = Button(root, text="Quick Play", command=settings)
+startBtn.place(relx=0.5, rely=0.5, anchor=CENTER)
 
 instructBtn = Button(root, text="Instructions", command=instructions)
-instructBtn.place(relx=0.5, rely=0.6, anchor=CENTER)
+instructBtn.place(relx=0.5, rely=0.7, anchor=CENTER)
 
 quitBtn = Button(root, text="Quit", command=quit)
 quitBtn.place(relx=0.5, rely=0.85, anchor=CENTER)
