@@ -555,7 +555,7 @@ def mainMenu():
 	root.geometry("300x400")
 	root.title('Shitty Minesweeper')
 
-	flag = Image.open("C:/Python Crap/minesweeperFlag.png")
+	flag = Image.open("minesweeperFlag.png")
 	flag = flag.resize((50,50))
 	flag = ImageTk.PhotoImage(flag)
 
