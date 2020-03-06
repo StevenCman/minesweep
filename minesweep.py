@@ -252,12 +252,15 @@ def left(event,t,u, num):
 	global lives
 
 	if(mineArray[t][u] == "*" and level == 0):
+		explosion()
 		lost()
 	elif(mineArray[t][u] == "*" and level > 0):
 		if(lives > 0):
 			lives -= 1
+			explosion()
 			liveLoss()
 		else:
+			explosion()
 			campaignLost()	
 	elif(mineArray[t][u] == 0):
 		openZeros(t, u)
@@ -315,7 +318,7 @@ def won():
 	wonGame.title("CONGRATULATIONS!!")
 	wonGame.geometry("400x400")
 
-	victory = Image.open("C:/Python Crap/victory.jpg")
+	victory = Image.open("victory.jpg")
 	victory = victory.resize((100,100))
 	victory = ImageTk.PhotoImage(victory)
 	
@@ -342,7 +345,7 @@ def lost():
 	lostGame.title("Game Over")
 	lostGame.geometry("300x200")
 
-	defeat = Image.open("C:/Python Crap/loss.jpg")
+	defeat = Image.open("loss.jpg")
 	defeat = defeat.resize((100,100))
 	defeat = ImageTk.PhotoImage(defeat)
 
@@ -370,6 +373,25 @@ def liveLoss():
 	con = Button(liveWindow, text="Continue on", command=campaign)
 	con.pack(side=BOTTOM)
 
+def explosion():
+	global explosionWindow
+	colors = ("red", "brown", "yellow")
+	explosionWindow = tkinter.Tk()
+	explosionWindow.title("EXPLOSION!!!")
+	explosionWindow.geometry("300x300")
+
+	colorSwap(explosionWindow, colors, 2,0)
+def colorSwap(window, colors, counter, timer):
+	try:
+		window.config(bg = colors[counter])
+	except:
+		return	
+	if(timer == 50):
+		window.destroy()
+	if(counter > 0 ):	
+		explosionWindow.after(100, colorSwap, window, colors, counter-1, timer+1)
+	else:
+		explosionWindow.after(100, colorSwap, window, colors, 2, timer+1)	
 def campaign():
 	try:
 		root.destroy()
@@ -535,7 +557,7 @@ def mainMenu():
 	except:
 		print()
 	try:
-		campaignLost.destroy()
+		lossWindow.destroy()
 	except:
 		print()
 	try:
