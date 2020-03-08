@@ -144,11 +144,24 @@ def gameplay(size, mines, arr):
 		tutorial.pack(side=TOP)
 	if(level == 0):
 		restartBtn = Button(gameWindow, text= "Restart", command=settings)
-		restartBtn.pack(side=TOP)
+		restartBtn.pack(side=BOTTOM)
+	
+	global c
+	c = num
+	global mineLeft
+	mineLeft = Label(gameWindow, text="Mines Left: " + str(c))
+	mineLeft.pack(side=TOP)
+
+	global safe
+	global safeLeft
+	safe = x*y - num
+	safeLeft = Label(gameWindow, text="Safe Spots Left: " + str(safe))
+	safeLeft.pack(side=TOP)
 
 	quitBtn = Button(gameWindow, text= "Quit", command=quit)
-	quitBtn.pack(side=TOP)
+	quitBtn.pack(side=BOTTOM)
 
+	global hintBtn
 	hintBtn = Button(gameWindow, text= "Hint", command=lambda x1 = x, y1 = y, number = num: hint(x1, y1, number))
 	hintBtn.pack(side = RIGHT)
 
@@ -164,7 +177,7 @@ def gameplay(size, mines, arr):
 			btnArray[z][w].pack(side = LEFT)
 
 def instructions():
-	webbrowser.open("http://www.freeminesweeper.org/help/minehelpinstructions.html")
+	webbrowser.open("instructions.html")
 
 def quit():
 	try:
@@ -238,6 +251,12 @@ def updateValue(rn, c, mineArray):
 			mineArray[rn+1][c+1] += 1
 
 def hint(x1,y1,num):
+	global safe
+	global safeLeft
+
+	safe -= 1
+	safeLeft.config(text="Safe Spaces Left: " + str(safe))
+
 	x = random.randint(0, x1-1)
 	y = random.randint(0, y1-1)
 	if(str(btnArray[x][y]['state']) == "normal" and mineArray[x][y] != "*"):
@@ -245,11 +264,16 @@ def hint(x1,y1,num):
 		winCheck(x1, y1, num)
 	else:
 		hint(x1,y1,num)
+	if(safe == 1):
+		hintBtn.config(state=DISABLED)
+
 
 def left(event,t,u, num):
 	btnArray[t][u].unbind('<Button-1>')
 	btnArray[t][u].unbind('<Button-3>')
 	global lives
+	global safe
+	global safeLeft
 
 	if(mineArray[t][u] == "*" and level == 0):
 		explosion()
@@ -266,16 +290,26 @@ def left(event,t,u, num):
 		openZeros(t, u)
 	else:
 		btnArray[t][u].config(text=mineArray[t][u], state=DISABLED)
-	
+		safe -= 1
+		safeLeft.config(text="Safe Spaces Left: " + str(safe))
+	if(safe == 1):
+		hintBtn.config(state=DISABLED)	
 	winCheck(t,u,num)
     
 def right(event,t,u):
-    btnArray[t][u].config(bg='orange', text="flag")
+	global c
+	global mineLeft
+	btnArray[t][u].config(bg='orange', text="flag")
+	c = c - 1
+	mineLeft.config(text="Mines Left: " + str(c))
 
 def openZeros(x, y):
 	row = mineArray[x]
 	btnArray[x][y].config(text=mineArray[x][y], state=DISABLED)
-
+	global safe
+	global safeLeft
+	safe -= 1
+	safeLeft.config(text="Safe Spaces Left: " + str(safe))
 	if (y-1 > -1):
 		if (row[y-1] != "*" and str(btnArray[x][y-1]['state']) == "normal"):
 			btnArray[x][y-1].config(text=mineArray[x][y-1], state=DISABLED)
