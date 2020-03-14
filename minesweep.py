@@ -7,6 +7,11 @@ import random
 import time
 from PIL import Image
 from PIL import ImageTk
+from playsound import playsound
+
+#Set mineArray to tuple - mines set to *,0 - other values = (mines around, and 0-2 for powerups)
+
+
 
 def settings():
 	try:
@@ -60,6 +65,8 @@ def gameplay(size, mines, arr):
 	global name
 	global na
 	global level
+	global numHint
+	numHint = 5
 	if (level == 1):
 		try:
 			name = na.get()
@@ -125,7 +132,7 @@ def gameplay(size, mines, arr):
 		y = size
 		num = mines
 
-	mineArray = [[0 for p in range(y)] for q in range(x)]
+	mineArray = [[(0,random.randint(0,100)) for p in range(y)] for q in range(x)]
 	btnArray = [[0 for x in range(y)] for x in range(x)]
 
 	if(arr==0):
@@ -152,17 +159,15 @@ def gameplay(size, mines, arr):
 	mineLeft = Label(gameWindow, text="Mines Left: " + str(c))
 	mineLeft.pack(side=TOP)
 
-	global safe
 	global safeLeft
-	safe = x*y - num
-	safeLeft = Label(gameWindow, text="Safe Spots Left: " + str(safe))
+	safeLeft = Label(gameWindow, text="Safe Spots Left: " + str(x*y - num))
 	safeLeft.pack(side=TOP)
 
 	quitBtn = Button(gameWindow, text= "Quit", command=quit)
 	quitBtn.pack(side=BOTTOM)
 
 	global hintBtn
-	hintBtn = Button(gameWindow, text= "Hint", command=lambda x1 = x, y1 = y, number = num: hint(x1, y1, number))
+	hintBtn = Button(gameWindow, text= "Hints: "+ str(numHint), command=lambda x1 = x, y1 = y, number = num: hint(x1, y1, number))
 	hintBtn.pack(side = RIGHT)
 
 	for t in range(x):
@@ -209,8 +214,8 @@ def mineMaker(mines, x, y, mineArray):
 		corner = True
 	if (mines == 0):
 		return
-	if not currentRow[c] == "*" and not corner:
-		currentRow[c] = "*"
+	if not currentRow[c][0] == "*" and not corner:
+		currentRow[c] = ("*", 0)
 		mines -=1
 		mineMaker(mines, x, y, mineArray)
 	else:
@@ -219,81 +224,98 @@ def mineMaker(mines, x, y, mineArray):
 def updater(x, y, mineArray):
 	for r in range(0,x):
 		for c in range(0,y):
-			if mineArray[r][c] == "*":
+			if mineArray[r][c][0] == "*":
 				updateValue(r, c, mineArray)
 
 def updateValue(rn, c, mineArray):
 
 	if rn-1 > -1:
-		if(mineArray[rn-1][c-1] != "*" and c-1 > -1):
-			mineArray[rn-1][c-1] += 1
+		if(mineArray[rn-1][c-1][0] != "*" and c-1 > -1):
+			mineArray[rn-1][c-1] = (int(mineArray[rn-1][c-1][0])+1, mineArray[rn-1][c-1][1])
 
-		if(mineArray[rn-1][c] != "*"):
-			mineArray[rn-1][c] += 1
+		if(mineArray[rn-1][c][0] != "*"):
+			mineArray[rn-1][c] = (int(mineArray[rn-1][c][0])+1, mineArray[rn-1][c][1])
 
-		if(c+1 < len(mineArray[0]) and mineArray[rn-1][c+1] != "*"):
-			mineArray[rn-1][c+1] += 1
+		if(c+1 < len(mineArray[0]) and mineArray[rn-1][c+1][0] != "*"):
+			mineArray[rn-1][c+1] = (int(mineArray[rn-1][c+1][0])+1, mineArray[rn-1][c+1][1])
 
-	if(c-1 > -1 and mineArray[rn][c-1] != "*"):
-		mineArray[rn][c-1] += 1
+	if(c-1 > -1 and mineArray[rn][c-1][0] != "*"):
+		mineArray[rn][c-1] = (int(mineArray[rn][c-1][0])+1, mineArray[rn][c-1][1])
 
-	if(c+1 < len(mineArray[0]) and mineArray[rn][c+1] != "*"):
-		mineArray[rn][c+1] += 1
+	if(c+1 < len(mineArray[0]) and mineArray[rn][c+1][0] != "*"):
+		mineArray[rn][c+1] = (int(mineArray[rn][c+1][0])+1, mineArray[rn][c+1][1])
 
 	if rn+1 < len(mineArray[0]):
-		if mineArray[rn+1][c-1] != "*" and c-1 > -1:
-			mineArray[rn+1][c-1] += 1
+		if mineArray[rn+1][c-1][0] != "*" and c-1 > -1:
+			print(mineArray[rn+1][c-1])
+			mineArray[rn+1][c-1] = (int(mineArray[rn+1][c-1][0])+1, mineArray[rn+1][c-1][1])
 
-		if mineArray[rn+1][c] != "*":
-			mineArray[rn+1][c] += 1
+		if mineArray[rn+1][c][0] != "*":
+			mineArray[rn+1][c] = (int(mineArray[rn+1][c][0])+1, mineArray[rn+1][c][1])
 
-		if  (c+1 < len(mineArray[0]) and mineArray[rn+1][c+1] != "*" ):
-			mineArray[rn+1][c+1] += 1
+		if  (c+1 < len(mineArray[0]) and mineArray[rn+1][c+1][0] != "*" ):
+			mineArray[rn+1][c+1] = (int(mineArray[rn+1][c+1][0])+1, mineArray[rn+1][c+1][1]) 
+
 
 def hint(x1,y1,num):
-	global safe
 	global safeLeft
+	global numHint
+	global hintBtn
 
-	safe -= 1
-	safeLeft.config(text="Safe Spaces Left: " + str(safe))
+
+	if(numHint < 1):
+		hintBtn.config(state=DISABLED)
 
 	x = random.randint(0, x1-1)
 	y = random.randint(0, y1-1)
-	if(str(btnArray[x][y]['state']) == "normal" and mineArray[x][y] != "*"):
-		btnArray[x][y].config(text=mineArray[x][y], state=DISABLED)
+	if(str(btnArray[x][y]['state']) == "normal" and mineArray[x][y][0] != "*"):
+		btnArray[x][y].config(text=mineArray[x][y][0], state=DISABLED)
+		numHint -= 1
+		hintBtn.config(text="Hints: " + str(numHint))
+		if(numHint < 1):
+			hintBtn.config(state=DISABLED)
 		winCheck(x1, y1, num)
 	else:
 		hint(x1,y1,num)
-	if(safe == 1):
-		hintBtn.config(state=DISABLED)
-
 
 def left(event,t,u, num):
 	btnArray[t][u].unbind('<Button-1>')
 	btnArray[t][u].unbind('<Button-3>')
 	global lives
-	global safe
 	global safeLeft
+	global numHint
+	global hintBtn
 
-	if(mineArray[t][u] == "*" and level == 0):
+	if(mineArray[t][u][1] == 2 or mineArray[t][u][1] == 3 or mineArray[t][u][1] == 4):
+		numHint += 1
+		hintBtn.config(text="Hints: " + str(numHint))
+		hintBtn.config(state=ENABLED)
+
+	if(level == 0 and mineArray[t][u][0] == "*"):
 		explosion()
+		playsound("Explosion.wav")
 		lost()
-	elif(mineArray[t][u] == "*" and level > 0):
+
+	elif(mineArray[t][u][0] == "*" and level > 0):
 		if(lives > 0):
 			lives -= 1
 			explosion()
+			playsound("Explosion.wav", False)
 			liveLoss()
 		else:
 			explosion()
+			playsound("Explosion.wav", False)
 			campaignLost()	
-	elif(mineArray[t][u] == 0):
+	elif(mineArray[t][u][0] == 0):
+		playsound("Shovel.wav", False)
 		openZeros(t, u)
 	else:
-		btnArray[t][u].config(text=mineArray[t][u], state=DISABLED)
-		safe -= 1
-		safeLeft.config(text="Safe Spaces Left: " + str(safe))
-	if(safe == 1):
-		hintBtn.config(state=DISABLED)	
+		playsound("Shovel.wav", False)
+		btnArray[t][u].config(text=mineArray[t][u][0], state=DISABLED)
+		if(mineArray[t][u][1] == 1 and level > 0):
+			lives += 1
+			lifeGain()
+
 	winCheck(t,u,num)
     
 def right(event,t,u):
@@ -305,39 +327,52 @@ def right(event,t,u):
 
 def openZeros(x, y):
 	row = mineArray[x]
-	btnArray[x][y].config(text=mineArray[x][y], state=DISABLED)
-	global safe
+	btnArray[x][y].config(text=mineArray[x][y][0], state=DISABLED)
+
 	global safeLeft
-	safe -= 1
-	safeLeft.config(text="Safe Spaces Left: " + str(safe))
+	global lives
+
+	if(mineArray[x][y][1] == 1 and lives > 0):
+		lives += 1
 	if (y-1 > -1):
-		if (row[y-1] != "*" and str(btnArray[x][y-1]['state']) == "normal"):
-			btnArray[x][y-1].config(text=mineArray[x][y-1], state=DISABLED)
-			openZeros(x, y-1)
+		if (row[y-1][0] != "*" and str(btnArray[x][y-1]['state']) == "normal"):
+			btnArray[x][y-1].config(text=mineArray[x][y-1][0], state=DISABLED)
+			if(row[y-1][0] == 0):
+				openZeros(x, y-1)
 
 	if (y+1 < len(row)):
-		if (row[y+1] != "*" and str(btnArray[x][y+1]['state']) == "normal"):
-			btnArray[x][y+1].config(text=mineArray[x][y+1], state=DISABLED)
+		if (row[y+1][0] != "*" and str(btnArray[x][y+1]['state']) == "normal"):
+			btnArray[x][y+1].config(text=mineArray[x][y+1][0], state=DISABLED)
+		if(row[y+1][0] == 0):
 			openZeros(x, y+1)
 	
 	if (x-1 > -1):
-		if (mineArray[x-1][y] != "*" and str(btnArray[x-1][y]['state']) == "normal"):
-			btnArray[x-1][y].config(text=mineArray[x-1][y], state=DISABLED)
-			openZeros(x-1, y)
+		if (mineArray[x-1][y][0] != "*" and str(btnArray[x-1][y]['state']) == "normal"):
+			btnArray[x-1][y].config(text=mineArray[x-1][y][0], state=DISABLED)
+			if(mineArray[x-1][y][0] == 0):
+				openZeros(x-1, y)
 	
 	if (x+1 < len(mineArray)):
-		if(mineArray[x+1][y] != "*" and str(btnArray[x+1][y]['state']) == "normal"):
-			btnArray[x+1][y].config(text=mineArray[x+1][y], state=DISABLED)
-			openZeros(x+1, y)		
+		if(mineArray[x+1][y][0] != "*" and str(btnArray[x+1][y]['state']) == "normal"):
+			btnArray[x+1][y].config(text=mineArray[x+1][y][0], state=DISABLED)
+			if(mineArray[x+1][y][0] == 0):
+				openZeros(x+1, y)		
 
 def winCheck(x, y, num):
 	global level
+	global safeLeft
+	global hintBtn
 	counter = 0
 	for t in range(len(btnArray)):
 		for u in range(len(btnArray[t])):
 			if (str(btnArray[t][u]['state']) == "normal"):
 				counter += 1
-	print("Counter: " + str(counter))			
+
+	safeLeft.config(text="Safe Spaces Left: " + str(counter-num))
+	if(counter-num == 1):
+		hintBtn.config(state=DISABLED)
+	if(counter-num > 1 and numHint > 0):
+		hintBtn.config(state="normal")
 	if (counter == num and level == 0):
 		won()
 	elif(counter == num and level > 0):
@@ -394,6 +429,20 @@ def lost():
 	quitBtn = Button(lostGame, text= "Quit", command=quit)
 	quitBtn.place(relx=0.5, rely=0.8, anchor=CENTER)
 
+def lifeGain():
+	global lifeWindow
+	lifeWindow = tkinter.Tk()
+	lifeWindow.title("Life Gained!")
+	lifeWindow.geometry("350x150")
+	lab = Label(lifeWindow, text="Awesome, You have gained an extra chance at the job!\n Lives +1")
+	lab.pack(side=TOP)
+
+	close = Button(lifeWindow, text="Continue", command=closeLifeWindow)
+	close.pack(side=BOTTOM)
+
+def closeLifeWindow():
+	lifeWindow.destroy()
+
 def liveLoss():
 	gameWindow.destroy()
 	global liveWindow
@@ -415,6 +464,8 @@ def explosion():
 	explosionWindow.geometry("300x300")
 
 	colorSwap(explosionWindow, colors, 2,0)
+	
+
 def colorSwap(window, colors, counter, timer):
 	try:
 		window.config(bg = colors[counter])
@@ -463,7 +514,7 @@ def campaign():
 	if (level == 1):
 		Intro = Label(campaignWindow, text="Welcome to your Minesweep adventure!\n Hit continue below to get to your first minefield and start clearing land\n You can hit three mines before you are fired from your job")
 		Intro.pack(side=TOP)
-		mineArr = [[1,1,1], [1,"*",1], [1,1,1]]
+		mineArr = [[(1,0),(1,0),(1,0)], [(1,0),("*",0),(1,0)], [(1,0),(1,0),(1,0)]]
 		x1=3
 		miner=1
 		cont = Button(campaignWindow, text="Continue", command=lambda x=x1, mine=miner: gameplay(x,mine, mineArr))
@@ -471,7 +522,7 @@ def campaign():
 	elif(level == 2):
 		Intro = Label(campaignWindow, text="Congratulations on clearing your first minefield!\n Its only going to get harder from here.")
 		Intro.pack(side = TOP)
-		mineArr = [["*",2,1,0,0],[2,"*",2,1,0],[1,2,"*",2,1],[0,1,2,"*",2],[0,0,1,2,"*"]]
+		mineArr = [[("*",0),(2,0),(1,0),(0,0),(0,0)],[(2,0),("*",0),(2,0),(1,0),(0,0)],[(1,0),(2,0),("*",0),(2,0),(1,0)],[(0,0),(1,0),(2,0),("*",0),(2,0)],[(0,0),(0,0),(1,0),(2,0),("*",0)]]
 		x1=5
 		miner=5
 		cont = Button(campaignWindow, text="Continue", command=lambda x=x1, mine=miner: gameplay(x,mine, mineArr))
